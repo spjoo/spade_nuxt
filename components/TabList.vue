@@ -112,30 +112,6 @@ export default {
       ]
     };
   },
-  created() {
-    this.activeTab = this.tabData[0].name;
-    this.activeTabContent = 0;
-  },
-  mounted() {
-    if (this.$device.isDesktop)
-      window.addEventListener("mouseup", this.onMoveEndTab);
-    if (
-      this.$refs.tab_menu_list.scrollWidth > this.$refs.tab_wrap.clientWidth
-    ) {
-      this.$refs.tab_menu_item.forEach(v => {
-        v.style.flexBasis = "33.333%";
-        v.style.flexGrow = "0";
-        v.style.flexShrink = "0";
-      });
-    }
-    this.tabWidth = this.$refs.tab_wrap.clientWidth;
-    this.tabListWidth = this.$refs.tab_menu_list.scrollWidth;
-    console.log(this.tabWidth, this.tabListWidth, this.$device);
-  },
-  beforeDestroy() {
-    if (this.$device.isDesktop)
-      window.removeEventListener("mouseup", this.onMoveEndTab);
-  },
   methods: {
     onClickTab(item, index) {
       if (this.tabMoved || this.activeTab === item) return;
@@ -197,19 +173,45 @@ export default {
         this.tabMoved = false;
       }, 0);
     }
-  }
+  },
+  created() {
+    this.activeTab = this.tabData[0].name;
+    this.activeTabContent = 0;
+  },
+  mounted() {
+    if (this.$device.isDesktop)
+      window.addEventListener("mouseup", this.onMoveEndTab);
+    if (
+      this.$refs.tab_menu_list.scrollWidth > this.$refs.tab_wrap.clientWidth
+    ) {
+      this.$refs.tab_wrap.classList.add("is_scroll")
+      this.$refs.tab_menu_item.forEach(v => {
+        v.style.flexBasis = "33.333%";
+        v.style.flexGrow = "0";
+        v.style.flexShrink = "0";
+      });
+    }
+    this.tabWidth = this.$refs.tab_wrap.clientWidth;
+    this.tabListWidth = this.$refs.tab_menu_list.scrollWidth;
+    console.log(this.tabWidth, this.tabListWidth, this.$device);
+  },
+  beforeDestroy() {
+    if (this.$device.isDesktop)
+      window.removeEventListener("mouseup", this.onMoveEndTab);
+  },
 };
 </script>
 
 <style scoped>
 .tab_wrap {
-  width: 100%;
+  margin: 0 10px;
   overflow: hidden;
 }
 .tab_menu {
   border-top: 1px solid #e2e2e2;
   border-bottom: 1px solid #e2e2e2;
   touch-action: none;
+  overflow: hidden;
 }
 .tab_menu_list {
   padding: 0;
@@ -241,6 +243,9 @@ export default {
   border: 0;
   cursor: pointer;
   white-space: nowrap;
+}
+.is_scroll .tab_menu_btn {
+  padding: 0 5px;
 }
 .is_active .tab_menu_btn {
   background: #b49277;

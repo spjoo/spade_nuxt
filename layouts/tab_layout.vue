@@ -60,7 +60,7 @@ a {
   margin: 0 auto;
   min-height: 100vh;
   display: flex;
-  justify-content: center;
   text-align: center;
+  flex-direction: column;
 }
 </style>

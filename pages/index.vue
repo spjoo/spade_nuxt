@@ -28,7 +28,8 @@ li {
   list-style: none;
   margin-bottom: 15px;
 }
-.button-green {
+.button--green {
+  width: 100%;
   margin-left: 0;
 }
 </style>
