@@ -1,21 +1,12 @@
 <template>
-  <div ref="tab_wrap" class="tab_wrap">
+  <div class="tab_wrap" ref="tab_wrap">
     <div
       class="tab_menu"
-      @mousemove="onMoveTab"
-      @mousedown.prevent="onMoveStartTab"
-      @mouseup.prevent="onMoveEndTab"
-      @touchmove="onMoveTab"
-      @touchstart="onMoveStartTab"
-      @touchend="onMoveEndTab"
+      ref="tab_menu"
     >
       <ul
         ref="tab_menu_list"
         class="tab_menu_list"
-        :class="[
-          tabMoveStart ? 'is_move_start' : '',
-          tabMoved ? 'is_moved' : ''
-        ]"
       >
         <li
           v-for="(item, index) in tabData"
@@ -65,13 +56,9 @@ export default {
   data() {
     return {
       tabPosition: {
-        pointX: 0,
-        pointY: 0,
         moveX: 0,
         moveY: 0
       },
-      tabMoveStart: false,
-      tabMoved: false,
       tabWidth: 0,
       tabListWidth: 0,
       activeTab: "",
@@ -114,7 +101,7 @@ export default {
   },
   methods: {
     onClickTab(item, index) {
-      if (this.tabMoved || this.activeTab === item) return;
+      if (this.activeTab === item) return;
       this.activeTab = item;
       this.activeTabContent = index;
       if (this.tabListWidth > this.tabWidth && index > 0) {
@@ -125,105 +112,47 @@ export default {
         }
         if (moveX > this.tabListWidth - this.tabWidth)
           moveX = this.tabListWidth - this.tabWidth;
-        this.$refs.tab_menu_list.style.transform = `translateX(-${moveX}px)`;
-        this.tabPosition.moveX = moveX;
+        this.$refs.tab_menu_list.scrollLeft = moveX;
       }
     },
-    onMoveTab(e) {
-      if (this.tabMoveStart && this.tabListWidth > this.tabWidth) {
-        let moveX;
-        if (this.$device.isDesktop) {
-          moveX =
-            this.tabPosition.moveX - (this.tabPosition.pointX - e.clientX);
-        } else if (this.$device.isMobile) {
-          moveX =
-            this.tabPosition.moveX -
-            (this.tabPosition.pointX - e.changedTouches[0].pageX);
-        }
-        if (moveX > 0) moveX = 0;
-        else if (Math.abs(moveX) > this.tabListWidth - this.tabWidth)
-          moveX = (this.tabListWidth - this.tabWidth) * -1;
-        const translateX = `translateX(${moveX}px)`;
-        this.$refs.tab_menu_list.style.transform = translateX;
-        if (!this.tabMoved) this.tabMoved = true;
-      }
-    },
-    onMoveStartTab(e) {
-      if (!this.tabListWidth > this.tabWidth) return;
-      if (this.$device.isDesktop) {
-        this.tabPosition.pointX = e.clientX;
-      } else if (this.$device.isMobile) {
-        // 모바일에서 click 된 경우 touchstart 이벤트도 같이 실행되면서 오류 발생 - optional chaining 처리
-        this.tabPosition.pointX = e.changedTouches?.[0].pageX;
-      }
-      if (this.tabPosition.moveX !== 0) {
-        const style = getComputedStyle(this.$refs.tab_menu_list);
-        const matrix = new WebKitCSSMatrix(style.transform);
-        this.tabPosition.moveX = matrix.m41;
-      }
-      this.tabMoveStart = true;
-    },
-    onMoveEndTab() {
-      const style = getComputedStyle(this.$refs.tab_menu_list);
-      const matrix = new WebKitCSSMatrix(style.transform);
-      this.tabPosition.moveX = matrix.m41;
-      this.tabMoveStart = false;
-      setTimeout(() => {
-        // 탭 무브가 끝난 후 버튼 클릭되는 현상 때문에 tabMoved = false 값은 비동기로 처리
-        this.tabMoved = false;
-      }, 0);
-    }
   },
   created() {
     this.activeTab = this.tabData[0].name;
     this.activeTabContent = 0;
   },
   mounted() {
-    if (this.$device.isDesktop)
-      window.addEventListener("mouseup", this.onMoveEndTab);
     if (
-      this.$refs.tab_menu_list.scrollWidth > this.$refs.tab_wrap.clientWidth
+      this.$refs.tab_menu_list.scrollWidth > this.$refs.tab_menu.clientWidth
     ) {
       this.$refs.tab_wrap.classList.add("is_scroll")
-      this.$refs.tab_menu_item.forEach(v => {
-        v.style.flexBasis = "33.333%";
-        v.style.flexGrow = "0";
-        v.style.flexShrink = "0";
-      });
     }
-    this.tabWidth = this.$refs.tab_wrap.clientWidth;
+    this.tabWidth = this.$refs.tab_menu.clientWidth;
     this.tabListWidth = this.$refs.tab_menu_list.scrollWidth;
     console.log(this.tabWidth, this.tabListWidth, this.$device);
-  },
-  beforeDestroy() {
-    if (this.$device.isDesktop)
-      window.removeEventListener("mouseup", this.onMoveEndTab);
   },
 };
 </script>
 
 <style scoped>
 .tab_wrap {
-  margin: 0 10px;
+  padding: 0 10px;
+  width: 100%;
   overflow: hidden;
 }
 .tab_menu {
   border-top: 1px solid #e2e2e2;
   border-bottom: 1px solid #e2e2e2;
   touch-action: none;
-  overflow: hidden;
 }
 .tab_menu_list {
+  white-space: nowrap;
   padding: 0;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  transition: 0.5s ease transform;
-}
-.tab_menu_list.is_move_start {
-  transition: none;
+  scroll-behavior: smooth;
+  text-align: left;
 }
 .tab_menu_item {
+  display: inline-block;
+  vertical-align: top;
   list-style: none;
 }
 .tab_content {
@@ -234,21 +163,36 @@ export default {
   align-items: center;
   justify-content: center;
   width: 100%;
-  margin: -1px 0;
   height: 40px;
   padding: 0 17px;
   font-size: 14px;
   font-weight: 400;
   background: none;
   border: 0;
+  margin: -1px 0;
   cursor: pointer;
   white-space: nowrap;
 }
+.tab_wrap.is_scroll {
+  padding: 0;
+}
+.is_scroll .tab_menu {
+  border-top: 0;
+  border-bottom: 0;
+}
+.is_scroll .tab_menu_list {
+  padding: 0 10px;
+  overflow-y: hidden;
+  overflow-x: scroll;
+}
 .is_scroll .tab_menu_btn {
-  padding: 0 5px;
+  margin: 0;
+  border-top: 1px solid #e2e2e2;
+  border-bottom: 1px solid #e2e2e2;
 }
 .is_active .tab_menu_btn {
   background: #b49277;
+  border-color: #b49277;
   color: #fff;
 }
 </style>
